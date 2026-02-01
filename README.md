@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎰 Poker Tournament Timer
 
-## Getting Started
+Sistema profissional de gerenciamento de torneios de poker com timer de blinds automático.
 
-First, run the development server:
+## ✨ Features Implementadas (v1.0)
 
+- ⏱️ **Timer automático** com progressão de blinds
+- 🎮 **Controles completos**: Play, Pause, Reset, Next/Prev Level
+- ⚡ **Ajustes rápidos**: Adicionar/remover tempo (1min, 5min)
+- 🎨 **Design premium** inspirado em cassinos reais
+- 📊 **Estrutura de blinds** pré-configurada (12 níveis)
+- 🔔 **Alertas visuais** quando o tempo está acabando
+- 📱 **100% Responsivo** - funciona em qualquer dispositivo
+- 💾 **Estado gerenciado** com Zustand (preparado para persistência)
+
+## 🚀 Como Rodar
+
+### Pré-requisitos
+- Node.js 18+ instalado
+- npm ou yarn
+
+### Instalação
+
+1. **Instale as dependências:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Rode em modo desenvolvimento:**
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Abra no navegador:**
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏗️ Arquitetura
 
-## Learn More
+### Stack Tecnológica
+- **Next.js 15** (App Router)
+- **React 18**
+- **TypeScript**
+- **Zustand** (gerenciamento de estado)
+- **Tailwind CSS** (estilização)
+- **Lucide React** (ícones)
 
-To learn more about Next.js, take a look at the following resources:
+### Estrutura de Pastas
+```
+poker-timer-app/
+├── app/
+│   ├── layout.tsx          # Layout raiz
+│   ├── page.tsx            # Página principal
+│   └── globals.css         # Estilos globais
+├── components/
+│   └── TimerDisplay.tsx    # Componente principal do timer
+├── hooks/
+│   └── useTournamentTimer.ts  # Hook customizado
+├── store/
+│   └── tournament-store.ts    # Zustand store
+├── types/
+│   └── tournament.ts       # TypeScript types
+└── lib/
+    └── utils.ts            # Utilitários
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎯 Como Usar
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Iniciar Torneio**: Clique em "START" para começar o timer
+2. **Pausar**: Use "PAUSE" durante breaks
+3. **Ajustar Tempo**: Use os botões "+1 MIN" ou "-1 MIN" conforme necessário
+4. **Avançar Nível**: Use "NEXT" para pular para o próximo nível manualmente
+5. **Resetar**: "RESET" volta tudo ao início
 
-## Deploy on Vercel
+## 📝 Estrutura de Blinds Padrão
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+O sistema vem com uma estrutura de 12 níveis pré-configurada:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Níveis 1-2: 25/50 e 50/100 (sem ante)
+- Níveis 3-12: Progressão gradual até 1000/2000
+- Duração: 20 minutos por nível (1200 segundos)
+
+## 🔧 Customização
+
+### Modificar Estrutura de Blinds
+
+Edite o arquivo `store/tournament-store.ts`:
+
+```typescript
+const defaultStructure: BlindLevel[] = [
+  { level: 1, smallBlind: 25, bigBlind: 50, ante: 0, duration: 1200 },
+  // Adicione mais níveis aqui
+];
+```
+
+### Ajustar Cores do Tema
+
+Edite `tailwind.config.js` para mudar o esquema de cores.
+
+## 🚀 Próximos Passos
+
+- [ ] Persistência com localStorage
+- [ ] Multiple tournament templates
+- [ ] Player management
+- [ ] Payout calculator
+- [ ] Sound alerts
+- [ ] Export/Import structures
+- [ ] Responsive mobile layout optimization
+
+## 📦 Build para Produção
+
+```bash
+npm run build
+npm start
+```
+
+## 🎨 Design Features
+
+- **Gradientes emerald/slate** para tema de cassino premium
+- **Animações suaves** com Tailwind
+- **Tipografia Playfair Display** para elegância
+- **Alertas visuais** com cores: verde (normal), amarelo (warning), vermelho (crítico)
+- **Background pattern** com naipes de cartas animados
+
+## 🛠️ Tecnologias de Estado
+
+### Por que Zustand?
+- ✅ Leve e performático
+- ✅ Sem boilerplate
+- ✅ TypeScript-first
+- ✅ Fácil de testar
+- ✅ Preparado para persistência futura
+
+## 📄 Licença
+
+MIT
+
+---
+
+Desenvolvido com ♠️ ♥️ ♦️ ♣️
