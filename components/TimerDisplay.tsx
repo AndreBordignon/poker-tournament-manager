@@ -57,7 +57,7 @@ export default function TimerDisplay() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-6xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 tracking-tight">
-            POKER TOURNAMENT
+           Torneio Firmin Poker Club
           </h1>
           <div className="h-1 w-64 mx-auto mt-4 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"></div>
         </div>
@@ -288,11 +288,11 @@ export default function TimerDisplay() {
             onClick={() => setIsModalOpen(false)}
           >
             <div 
-              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border-2 border-slate-700 shadow-2xl"
+              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden border-2 border-slate-700 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header do Modal */}
-              <div className="bg-gradient-to-r from-emerald-900 to-slate-800 p-6 flex items-center justify-between border-b border-slate-700">
+              <div className="bg-gradient-to-r from-emerald-900 to-slate-800 p-6 flex items-center justify-between border-b border-slate-700 flex-shrink-0">
                 <div>
                   <h2 className="text-3xl font-display font-bold text-white flex items-center gap-3">
                     <List className="w-8 h-8 text-emerald-400" />
@@ -311,51 +311,9 @@ export default function TimerDisplay() {
               </div>
 
               {/* Conteúdo do Modal - Scrollable */}
-              <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
-                {/* Header da Tabela */}
-                <div className="grid grid-cols-5 gap-4 text-sm font-bold text-emerald-400 border-b border-slate-700 pb-4 mb-4 sticky top-0 bg-slate-900 bg-opacity-95 backdrop-blur-sm z-10">
-                  <div>LEVEL</div>
-                  <div>SMALL BLIND</div>
-                  <div>BIG BLIND</div>
-                  <div>ANTE</div>
-                  <div>DURATION</div>
-                </div>
-                
-                {/* Linhas da Tabela */}
-                <div className="space-y-2">
-                  {structure.map((blind, idx) => (
-                    <div
-                      key={idx}
-                      className={`grid grid-cols-5 gap-4 text-sm py-4 rounded-xl transition-all ${
-                        idx === currentLevel
-                          ? 'bg-emerald-900 bg-opacity-50 font-bold text-emerald-300 border-2 border-emerald-500 shadow-lg scale-105'
-                          : 'text-slate-300 hover:bg-slate-700 hover:bg-opacity-30 border-2 border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {idx === currentLevel && (
-                          <span className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
-                        )}
-                        <span className={idx === currentLevel ? 'text-xl' : ''}>{blind.level}</span>
-                      </div>
-                      <div className={idx === currentLevel ? 'text-xl' : ''}>
-                        {blind.smallBlind.toLocaleString()}
-                      </div>
-                      <div className={idx === currentLevel ? 'text-xl font-bold' : ''}>
-                        {blind.bigBlind.toLocaleString()}
-                      </div>
-                      <div className={idx === currentLevel ? 'text-xl' : ''}>
-                        {anteEnabled && blind.ante > 0 ? blind.ante.toLocaleString() : '—'}
-                      </div>
-                      <div className="text-slate-400">
-                        {formatTime(blind.duration)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Resumo no final */}
-                <div className="mt-8 fixed bg-slate-800 bg-opacity-50 rounded-xl p-6 border border-slate-700">
+              <div className="overflow-y-auto flex-1">
+                {/* Resumo da estrutura*/}
+                <div className=" px-6 my-8 bg-slate-800 bg-opacity-50 rounded-xl p-6 border border-slate-700">
                   <h3 className="text-xl font-bold text-emerald-400 mb-4">📊 Resumo da Estrutura</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
@@ -376,10 +334,52 @@ export default function TimerDisplay() {
                     </div>
                   </div>
                 </div>
+                   {/* Header da Tabela */}
+                <div className="grid grid-cols-5 gap-4 px-6 py-6 text-sm font-bold text-emerald-400 border-b border-slate-700 pb-4 mb-4 sticky top-0 bg-slate-900 bg-opacity-5 backdrop-blur-sm z-10">
+                  <div>LEVEL</div>
+                  <div>SMALL BLIND</div>
+                  <div>BIG BLIND</div>
+                  <div>ANTE</div>
+                  <div>DURATION</div>
+                </div>
+                {/* Linhas da Tabela */}
+                <div className="space-y-2 px-6">
+                  {structure.map((blind, idx) => (
+                    <div
+                      key={idx}
+                      className={`grid grid-cols-5 text-sm px-6 py-4 transition-all ${
+                        idx === currentLevel
+                          ? 'bg-emerald-900 bg-opacity-50 font-bold text-emerald-300 border-emerald-500 shadow-lg scale-105'
+                          : 'text-slate-300 hover:bg-slate-700 hover:bg-opacity-30 border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {idx === currentLevel && (
+                          <span className="w-2 h-2 m-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        )}
+                        <span className={idx === currentLevel ? 'text-xl' : ''}>{blind.level}</span>
+                      </div>
+                      <div className={idx === currentLevel ? 'text-xl' : ''}>
+                        {blind.smallBlind.toLocaleString()}
+                      </div>
+                      <div className={idx === currentLevel ? 'text-xl font-bold' : ''}>
+                        {blind.bigBlind.toLocaleString()}
+                      </div>
+                      <div className={idx === currentLevel ? 'text-xl' : ''}>
+                        {anteEnabled && blind.ante > 0 ? blind.ante.toLocaleString() : '—'}
+                      </div>
+                      <div className="text-slate-400">
+                        {formatTime(blind.duration)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                
               </div>
 
-              {/* Footer do Modal */}
-              <div className="bg-slate-900 p-4 border-t border-slate-700 flex justify-end">
+              {/* Footer do Modal - FIXO */}
+              <div className="bg-slate-900 p-4 border-t border-slate-700 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500
