@@ -73,17 +73,40 @@ export default function TimerDisplay() {
             </div>
           </div>
 
+          {/* Current Blinds - Premium card-style */}
+          <div className="grid grid-cols-3 gap-6 mb-8 max-w-4xl mx-auto">
+            {/* Small Blind */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-emerald-600 shadow-2xl">
+              <div className="text-emerald-400 text-md font-bold tracking-wider mb-2">SMALL BLIND</div>
+              <div className="text-6xl font-display font-bold text-white">
+                {currentBlind.smallBlind.toLocaleString()}
+              </div>
+            </div>
+
+            {/* Big Blind */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-yellow-500 shadow-2xl">
+              <div className="text-yellow-400 text-md font-bold tracking-wider mb-2">BIG BLIND</div>
+              <div className="text-6xl font-display font-bold text-white">
+                {currentBlind.bigBlind.toLocaleString()}
+              </div>
+            </div>
+
+            {/* Ante */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500 shadow-2xl">
+              <div className="text-purple-400 text-md font-bold tracking-wider mb-2">ANTE</div>
+              <div className="text-6xl font-display font-bold text-white">
+                {displayAnte > 0 ? displayAnte.toLocaleString() : '—'}
+              </div>
+            </div>
+          </div>
           {/* Timer Circle */}
           <div className="relative mb-12">
             <div className={`
-              mx-auto w-80 h-80 rounded-full flex items-center justify-center
-              bg-gradient-to-br from-slate-800 to-slate-900
-              border-8 ${isCritical ? 'border-red-500 animate-glow' : isWarning ? 'border-yellow-500' : 'border-emerald-500'}
-              shadow-2xl transition-all duration-300
+               ${isCritical ? 'border-red-500 animate-glow' : isWarning ? 'border-yellow-500' : 'border-emerald-500'}
             `}>
               <div className="text-center">
                 <div className={`
-                  text-8xl font-mono font-bold tracking-tight
+                  text-9xl font-mono font-bold tracking-tight
                   ${isCritical ? 'text-red-400 animate-pulse' : isWarning ? 'text-yellow-400' : 'text-emerald-400'}
                 `}>
                   {formatTime(timeRemaining)}
@@ -91,33 +114,6 @@ export default function TimerDisplay() {
                 <div className="text-slate-400 text-xl mt-2 font-mono">
                   {isPaused ? 'PAUSED' : isRunning ? 'RUNNING' : 'READY'}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Current Blinds - Premium card-style */}
-          <div className="grid grid-cols-3 gap-6 mb-8 max-w-4xl mx-auto">
-            {/* Small Blind */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-emerald-600 shadow-2xl transform hover:scale-105 transition-transform">
-              <div className="text-emerald-400 text-sm font-bold tracking-wider mb-2">SMALL BLIND</div>
-              <div className="text-5xl font-display font-bold text-white">
-                {currentBlind.smallBlind.toLocaleString()}
-              </div>
-            </div>
-
-            {/* Big Blind */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-yellow-500 shadow-2xl transform hover:scale-105 transition-transform">
-              <div className="text-yellow-400 text-sm font-bold tracking-wider mb-2">BIG BLIND</div>
-              <div className="text-5xl font-display font-bold text-white">
-                {currentBlind.bigBlind.toLocaleString()}
-              </div>
-            </div>
-
-            {/* Ante */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500 shadow-2xl transform hover:scale-105 transition-transform">
-              <div className="text-purple-400 text-sm font-bold tracking-wider mb-2">ANTE</div>
-              <div className="text-5xl font-display font-bold text-white">
-                {displayAnte > 0 ? displayAnte.toLocaleString() : '—'}
               </div>
             </div>
           </div>
