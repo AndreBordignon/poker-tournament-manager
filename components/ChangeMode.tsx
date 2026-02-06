@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trophy, Coins, ArrowRight } from 'lucide-react';
+import { Trophy, Coins, ArrowRight, Edit } from 'lucide-react';
 import { useTournamentStore } from '@/store/tournament-store';
 import { CashGameConfig } from '@/types/tournament';
 
@@ -134,9 +134,7 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
               <h2 className="text-4xl font-display font-bold text-white mb-2">Modo Torneio</h2>
               <p className="text-slate-400">Estrutura completa configurada</p>
             </div>
-            <div onClick={() => onTournamentSetup()}>
-             <p>editar estrutura</p>
-            </div>
+
             <div className="space-y-4 mb-8 bg-slate-900 bg-opacity-50 rounded-xl p-6">
               <div className="flex justify-between items-center border-b border-slate-700 pb-3">
                 <span className="text-slate-400">Níveis:</span>
@@ -155,7 +153,9 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
                 <span className="text-white font-bold">10 horas</span>
               </div>
             </div>
-
+            <div onClick={() => onTournamentSetup()} className='mb-10'>
+             <button className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl font-bold transition-all"><Edit className="w-5 h-5 inline mr-2" />Editar Estrutura</button>
+            </div>
             <div className="flex gap-4">
               <button
                 onClick={() => setSelectedMode(null)}
