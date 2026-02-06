@@ -13,3 +13,8 @@ export function formatChips(amount: number): string {
   }
   return amount.toString();
 }
+
+export function formatMoney(cents: number): string {
+  const reais = cents / 100;
+  return `R$ ${reais.toFixed(2).replace('.', ',')}`;
+}

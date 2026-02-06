@@ -30,6 +30,7 @@ const defaultStructure: BlindLevel[] = [
 
 export const useTournamentStore = create<TournamentStore>((set, get) => ({
   // State inicial
+  gameMode: 'tournament',
   currentLevel: 0,
   timeRemaining: defaultStructure[0].duration,
   isRunning: false,
@@ -37,8 +38,23 @@ export const useTournamentStore = create<TournamentStore>((set, get) => ({
   structure: defaultStructure,
   startTime: null,
   anteEnabled: false, // Ante desabilitado por padrão
+  cashGameConfig: null,
 
   // Actions
+  setGameMode: (mode) => {
+    set({ gameMode: mode });
+  },
+
+  setCashGameConfig: (config) => {
+    set({ 
+      cashGameConfig: config,
+      timeRemaining: 7200, // 2 horas inicial para cash game
+      currentLevel: 0,
+      isRunning: false,
+      isPaused: false,
+    });
+  },
+
   startTimer: () => {
     const state = get();
     if (!state.isRunning) {
@@ -60,9 +76,10 @@ export const useTournamentStore = create<TournamentStore>((set, get) => ({
 
   resetTimer: () => {
     const state = get();
+    const initialTime = state.gameMode === 'cashgame' ? 7200 : state.structure[0].duration; // 2 horas para cash game
     set({
       currentLevel: 0,
-      timeRemaining: state.structure[0].duration,
+      timeRemaining: initialTime,
       isRunning: false,
       isPaused: false,
       startTime: null,
