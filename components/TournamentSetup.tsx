@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowRight, Settings, Clock, Coffee } from 'lucide-react';
 import { generateBlindStructure, presetStructures, TournamentConfig } from '@/lib/blindStructureGenerator';
 import { useTournamentStore } from '@/store/tournament-store';
+import { getSavedStructures, saveCurrentTournament, saveStructure } from '@/lib/storage';
 
 interface TournamentSetupProps {
   onComplete: () => void;
@@ -11,9 +12,10 @@ interface TournamentSetupProps {
 }
 
 export default function TournamentSetup({ onComplete, onBack }: TournamentSetupProps) {
-  const { setStructure } = useTournamentStore();
+  const { setStructure, setTournamentName } = useTournamentStore();
   
   const [config, setConfig] = useState<TournamentConfig>({
+    name: "Meu Torneio",
     startingSmallBlind: 100,
     startingBigBlind: 200,
     levelDuration: 30,
@@ -23,10 +25,12 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
   });
 
   const [showPreview, setShowPreview] = useState(false);
+  const [savedStructures, setSavedStructures] = useState(getSavedStructures());
 
   const handlePresetSelect = (presetKey: keyof typeof presetStructures) => {
     const preset = presetStructures[presetKey];
     setConfig({
+      name: preset.name,
       startingSmallBlind: preset.startingSmallBlind,
       startingBigBlind: preset.startingBigBlind,
       levelDuration: preset.levelDuration,
@@ -36,9 +40,50 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
     });
   };
 
+  const handleSavedStructureSelect = (savedStructure: any) => {
+    if (savedStructure.config) {
+      setConfig({
+        name: savedStructure.name,
+        startingSmallBlind: savedStructure.config.startingSmallBlind,
+        startingBigBlind: savedStructure.config.startingBigBlind,
+        levelDuration: savedStructure.config.levelDuration,
+        includeBreaks: savedStructure.config.includeBreaks,
+        breakDuration: savedStructure.config.breakDuration,
+        breakInterval: savedStructure.config.breakInterval,
+      });
+    }
+  };
+
+  const handleSaveStructure = () => {
+    const structure = generateBlindStructure(config);
+    saveStructure(config.name || 'Estrutura sem nome', structure, {
+      startingSmallBlind: config.startingSmallBlind,
+      startingBigBlind: config.startingBigBlind,
+      levelDuration: config.levelDuration,
+      includeBreaks: config.includeBreaks,
+      breakDuration: config.breakDuration,
+      breakInterval: config.breakInterval,
+    });
+    // Atualiza a lista de estruturas salvas
+    setSavedStructures(getSavedStructures());
+  };
+
   const handleGenerateAndStart = () => {
     const structure = generateBlindStructure(config);
     setStructure(structure);
+    setTournamentName(config.name || 'Torneio Atual');
+    saveCurrentTournament({
+      gameMode: 'tournament',
+      currentLevel: 0,
+      timeRemaining: config.levelDuration * 60,
+      isRunning: false,
+      isPaused: false,
+      structure: structure,
+      anteEnabled: false,
+      startTime: Date.now(),
+      tournamentName: config.name || 'Torneio Atual',
+      cashGameConfig: undefined,
+    });
     onComplete();
   };
 
@@ -71,10 +116,23 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
               <h2 className="text-3xl font-bold text-white">Configuração</h2>
             </div>
 
+            {/* Nome do Torneio */}
+            <div className='space-y-4 mb-6'>
+              <label className="text-slate-400 text-sm font-bold block mb-2">NOME DO TORNEIO</label>
+              <input 
+                type="text" 
+                value={config.name} 
+                onChange={(e) => setConfig({ ...config, name: e.target.value })} 
+                className="w-full bg-slate-900 text-white px-4 py-3 rounded-lg border-2 border-slate-700 
+                         focus:border-emerald-500 focus:outline-none font-bold" 
+                placeholder="Nome do Torneio" 
+              />
+            </div>
+
             {/* Presets */}
             <div className="mb-6">
               <label className="text-slate-400 text-sm font-bold block mb-3">ESTRUTURAS PRÉ-DEFINIDAS</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mb-2">
                 <button
                   onClick={() => handlePresetSelect('standard')}
                   className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-bold transition-all text-sm"
@@ -94,6 +152,25 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
                   Deep Stack
                 </button>
               </div>
+
+              {/* Estruturas Salvas */}
+              {savedStructures.length > 0 && (
+                <>
+                  <label className="text-slate-400 text-xs font-bold block mb-2 mt-4">MINHAS ESTRUTURAS</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {savedStructures.map((savedStructure) => (
+                      <button
+                        key={savedStructure.id}
+                        onClick={() => handleSavedStructureSelect(savedStructure)}
+                        className="bg-cyan-900 hover:bg-cyan-800 text-white px-3 py-2 rounded-lg font-bold transition-all text-xs truncate"
+                        title={savedStructure.name}
+                      >
+                        {savedStructure.name}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Blinds Iniciais */}
@@ -197,33 +274,42 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
               )}
             </div>
 
-            {/* Botão Preview */}
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl 
-                       font-bold transition-all mb-4"
-            >
-              {showPreview ? 'OCULTAR' : 'VISUALIZAR'} ESTRUTURA
-            </button>
-
             {/* Botões de ação */}
-            <div className="flex gap-3">
+            <div className="space-y-3">
               <button
-                onClick={onBack}
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl 
+                onClick={() => setShowPreview(!showPreview)}
+                className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl 
                          font-bold transition-all"
               >
-                VOLTAR
+                {showPreview ? 'OCULTAR' : 'VISUALIZAR'} ESTRUTURA
               </button>
+              
               <button
-                onClick={handleGenerateAndStart}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 
-                         hover:to-green-500 text-white px-6 py-4 rounded-xl font-bold transition-all 
-                         shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                onClick={handleSaveStructure}
+                className="w-full bg-cyan-700 hover:bg-cyan-600 text-white px-6 py-3 rounded-xl 
+                         font-bold transition-all"
               >
-                CRIAR TORNEIO
-                <ArrowRight className="w-5 h-5" />
+                💾 SALVAR ESTRUTURA
               </button>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={onBack}
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl 
+                           font-bold transition-all"
+                >
+                  VOLTAR
+                </button>
+                <button
+                  onClick={handleGenerateAndStart}
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 
+                           hover:to-green-500 text-white px-6 py-4 rounded-xl font-bold transition-all 
+                           shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  CRIAR TORNEIO
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
 

@@ -25,6 +25,8 @@ export interface TournamentState {
   startTime: number | null;
   anteEnabled: boolean; // Controla se ante está ativo
   cashGameConfig: CashGameConfig | null; // Configuração do cash game
+  tournamentId: string | null; // ID do torneio atual no histórico
+  tournamentName: string; // Nome do torneio
 }
 
 export interface TournamentStore extends TournamentState {
@@ -39,6 +41,7 @@ export interface TournamentStore extends TournamentState {
   previousLevel: () => void;
   addTime: (seconds: number) => void;
   setStructure: (structure: BlindLevel[]) => void;
+  setTournamentName: (name: string) => void;
   toggleAnte: () => void; // Nova action para ativar/desativar ante
   tick: () => void;
 }

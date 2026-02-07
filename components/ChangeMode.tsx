@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Trophy, Coins, ArrowRight, Edit } from 'lucide-react';
+import { Trophy, Coins, ArrowRight, Settings, Edit } from 'lucide-react';
 import { useTournamentStore } from '@/store/tournament-store';
 import { CashGameConfig } from '@/types/tournament';
+import { saveStructure, saveTournamentHistory } from '@/lib/storage';
+import SettingsModal from '@/components/SettingsModal';
 
 interface ModeSelectionProps {
   onModeSelected: () => void;
@@ -13,14 +15,15 @@ interface ModeSelectionProps {
 export default function ModeSelection({ onModeSelected, onTournamentSetup }: ModeSelectionProps) {
   const { setGameMode, setCashGameConfig } = useTournamentStore();
   const [selectedMode, setSelectedMode] = useState<'tournament' | 'cashgame' | null>(null);
-  
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   // Cash game settings
   const [minBuyIn, setMinBuyIn] = useState(20);
   const [maxBuyIn, setMaxBuyIn] = useState(30);
 
   const handleStartTournament = () => {
     setGameMode('tournament');
-    onModeSelected();
+    onTournamentSetup();
   };
 
   const handleStartCashGame = () => {
@@ -30,7 +33,7 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
       minBuyIn: minBuyIn,
       maxBuyIn: maxBuyIn,
     };
-    
+
     setGameMode('cashgame');
     setCashGameConfig(config);
     onModeSelected();
@@ -48,7 +51,17 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
 
       <div className="relative z-10 max-w-6xl w-full">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 relative">
+          {/* Botão Settings no canto superior direito */}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="absolute top-0 right-0 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-bold 
+                     transition-all shadow-lg flex items-center gap-2"
+          >
+            <Settings className="w-5 h-5" />
+            CONFIG
+          </button>
+
           <h1 className="text-7xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 tracking-tight mb-4">
             POKER MANAGER
           </h1>
@@ -154,8 +167,9 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
               </div>
             </div>
             <div onClick={() => onTournamentSetup()} className='mb-10'>
-             <button className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl font-bold transition-all"><Edit className="w-5 h-5 inline mr-2" />Editar Estrutura</button>
+              <button className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl font-bold transition-all"><Edit className="w-5 h-5 inline mr-2" />Editar Estrutura</button>
             </div>
+
             <div className="flex gap-4">
               <button
                 onClick={() => setSelectedMode(null)}
@@ -206,7 +220,7 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
               {/* Buy-in Configuration */}
               <div className="bg-slate-900 bg-opacity-50 rounded-xl p-6">
                 <h3 className="text-yellow-400 font-bold mb-4">BUY-IN</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="text-slate-400 text-sm block mb-2">Buy-in Mínimo</label>
@@ -272,6 +286,9 @@ export default function ModeSelection({ onModeSelected, onTournamentSetup }: Mod
           </div>
         )}
       </div>
+
+      {/* Modal de Configurações */}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

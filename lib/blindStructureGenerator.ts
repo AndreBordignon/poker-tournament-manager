@@ -1,6 +1,7 @@
 import { BlindLevel } from '@/types/tournament';
 
 export interface TournamentConfig {
+  name: string;
   startingSmallBlind: number;
   startingBigBlind: number;
   levelDuration: number; // em minutos

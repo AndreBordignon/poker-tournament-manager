@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useTournamentTimer } from '@/hooks/useTournamentTimer';
 import { formatTime } from '@/lib/utils';
-import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home, Settings } from 'lucide-react';
+import SettingsModal from '@/components/SettingsModal';
+import { useTournamentStore } from '@/store/tournament-store';
 
 interface TimerDisplayProps {
   onBackToMenu: () => void;
@@ -11,6 +13,7 @@ interface TimerDisplayProps {
 
 export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const {
     currentLevel,
@@ -28,6 +31,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
     addTime,
     toggleAnte,
   } = useTournamentTimer();
+  const { tournamentName } = useTournamentStore();
 
   const currentBlind = structure[currentLevel];
   const nextBlind = currentLevel < structure.length - 1 ? structure[currentLevel + 1] : null;
@@ -77,12 +81,19 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
             
             <div className="text-center flex-1">
               <h1 className="text-6xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 tracking-tight">
-                Torneio Firmin Poker Club
+                {tournamentName}
               </h1>
               <div className="h-1 w-64 mx-auto mt-4 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"></div>
             </div>
 
-            <div className="w-32"></div>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-bold 
+                       transition-all shadow-lg flex items-center gap-2"
+            >
+              <Settings className="w-5 h-5" />
+              CONFIG
+            </button>
           </div>
 
           <div className="max-w-6xl mx-auto">
@@ -362,7 +373,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                   Estrutura Completa do Torneio
                 </h2>
                 <p className="text-slate-300 mt-2">
-                  {structure.length} níveis
+                  {structure?.length} níveis
                 </p>
               </div>
               <button
@@ -470,6 +481,9 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
           </div>
         </div>
       )}
+
+      {/* Modal de Configurações */}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

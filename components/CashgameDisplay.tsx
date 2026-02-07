@@ -1,14 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { useTournamentTimer } from '@/hooks/useTournamentTimer';
 import { formatTime, formatMoney } from '@/lib/utils';
-import { Play, Pause, RotateCcw, Plus, Home } from 'lucide-react';
+import { Play, Pause, RotateCcw, Plus, Home, Settings } from 'lucide-react';
+import SettingsModal from '@/components/SettingsModal';
 
 interface CashGameDisplayProps {
   onBackToMenu: () => void;
 }
 
 export default function CashGameDisplay({ onBackToMenu }: CashGameDisplayProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const {
     timeRemaining,
     isRunning,
@@ -62,7 +65,14 @@ export default function CashGameDisplay({ onBackToMenu }: CashGameDisplayProps) 
               CASH GAME
             </h1>
 
-            <div className="w-32"></div> {/* Spacer for centering */}
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-bold 
+                       transition-all shadow-lg flex items-center gap-2"
+            >
+              <Settings className="w-5 h-5" />
+              CONFIG
+            </button>
           </div>
 
           <div className="max-w-6xl mx-auto">
@@ -182,7 +192,9 @@ export default function CashGameDisplay({ onBackToMenu }: CashGameDisplayProps) 
                 </button>
               ) : (
                 <button
-                  onClick={pauseTimer}
+                  onClick={() => {
+                    pauseTimer();
+                  }}
                   className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500
                            text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg
                            hover:shadow-xl flex items-center gap-2 text-lg"
@@ -241,6 +253,9 @@ export default function CashGameDisplay({ onBackToMenu }: CashGameDisplayProps) 
           </div>
         </div>
       </div>
+
+      {/* Modal de Configurações */}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }
