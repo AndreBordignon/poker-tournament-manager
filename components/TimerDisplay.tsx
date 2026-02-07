@@ -148,7 +148,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                 {/* Small Blind */}
                 <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-emerald-600 shadow-2xl transform hover:scale-105 transition-transform">
                   <div className="text-emerald-400 text-md font-bold tracking-wider mb-2">SMALL BLIND</div>
-                  <div className="text-6xl font-display font-bold text-white">
+                  <div className="text-8xl font-display font-bold text-white">
                     {currentBlind.smallBlind.toLocaleString()}
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                 {/* Big Blind */}
                 <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-yellow-500 shadow-2xl transform hover:scale-105 transition-transform">
                   <div className="text-yellow-400 text-md font-bold tracking-wider mb-2">BIG BLIND</div>
-                  <div className="text-6xl font-display font-bold text-white">
+                  <div className="text-8xl font-display font-bold text-white">
                     {currentBlind.bigBlind.toLocaleString()}
                   </div>
                 </div>
