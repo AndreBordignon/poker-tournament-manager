@@ -62,7 +62,7 @@ export const useTournamentStore = create<TournamentStore>((set, get) => ({
   anteEnabled: initialState?.anteEnabled || false,
   startTime: initialState?.startTime || null,
   cashGameConfig: initialState?.cashGameConfig || null,
-  tournamentId: initialState?.tournamentId || Math.random().toString(36).substr(2, 9),
+  tournamentId: Math.random().toString(36).substr(2, 9),
   tournamentName: initialState?.name || 'Torneio Atual',
 
   // Actions
