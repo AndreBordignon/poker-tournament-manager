@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useTournamentTimer } from '@/hooks/useTournamentTimer';
+import { useAdminStore } from '@/store/admin-store';
 import { formatTime } from '@/lib/utils';
-import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home, Settings } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home, Settings, Users, Award, ServerCrash, ChartColumnStacked } from 'lucide-react';
 import SettingsModal from '@/components/SettingsModal';
-import { useTournamentStore } from '@/store/tournament-store';
+import AdminPanel from '@/components/AdminPanel';
 
 interface TimerDisplayProps {
   onBackToMenu: () => void;
@@ -14,6 +15,7 @@ interface TimerDisplayProps {
 export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   
   const {
     currentLevel,
@@ -31,7 +33,14 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
     addTime,
     toggleAnte,
   } = useTournamentTimer();
-  const { tournamentName } = useTournamentStore();
+
+  // Pega estatísticas do admin
+  const { getStats, getPayouts } = useAdminStore();
+  const stats = getStats();
+  const payouts = getPayouts();
+  
+  // Verifica se está no ITM (In The Money)
+  const isInTheMoney = payouts && stats.activePlayers <= payouts.structure.positions;
 
   const currentBlind = structure[currentLevel];
   const nextBlind = currentLevel < structure.length - 1 ? structure[currentLevel + 1] : null;
@@ -46,6 +55,29 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
   // Verifica se é break
   const isBreak = currentBlind.smallBlind === 0;
   const nextIsBreak = nextBlind && nextBlind.smallBlind === 0;
+
+  // Calcula denominações de fichas baseado no small blind atual
+  // Fichas disponíveis: 100, 500, 1000, 5000, 25000
+  const getChipDenominations = (smallBlind: number): string => {
+    if (smallBlind === 0) return '—'; // Break não tem fichas
+    
+    // Quando SB >= 1000, remove fichas de 100 (race-off)
+    // A partir de 1K só precisamos de: 500, 1K, 5K, 25K
+    if (smallBlind >= 1000) {
+      return '500, 1K, 5K, 25K';
+    }
+    
+    // SB < 1000, usa todas as fichas incluindo 100
+    return '100, 500, 1K, 5K, 25K';
+  };
+
+  const currentDenominations = getChipDenominations(currentBlind.smallBlind);
+  
+  // Alerta de RACE-OFF quando SB chega a 1000 pela primeira vez
+  // Mostra aviso para remover fichas de 100
+  const showChipRemovalAlert = currentBlind.smallBlind >= 1000 && 
+                                 currentLevel > 0 && 
+                                 structure[currentLevel - 1]?.smallBlind < 1000;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-950 relative overflow-hidden flex flex-col">
@@ -81,19 +113,27 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
             
             <div className="text-center flex-1">
               <h1 className="text-6xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 tracking-tight">
-                {tournamentName}
+                Torneio Firmin Poker Club
               </h1>
               <div className="h-1 w-64 mx-auto mt-4 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"></div>
             </div>
 
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-bold 
-                       transition-all shadow-lg flex items-center gap-2"
-            >
-              <Settings className="w-5 h-5" />
-              CONFIG
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsAdminOpen(true)}
+                className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold 
+                         transition-all shadow-lg flex items-center gap-2"
+              >
+                <Users className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-bold 
+                         transition-all shadow-lg flex items-center gap-2"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="max-w-6xl mx-auto">
@@ -144,40 +184,32 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
               </div>
             ) : (
               /* Normal Blinds Display */
-              <div className="grid grid-cols-3 gap-6 mb-6 max-w-4xl mx-auto">
-                {/* Small Blind */}
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-emerald-600 shadow-2xl transform hover:scale-105 transition-transform">
-                  <div className="text-emerald-400 text-md font-bold tracking-wider mb-2">SMALL BLIND</div>
-                  <div className="text-8xl font-display font-bold text-white">
-                    {currentBlind.smallBlind.toLocaleString()}
+              <>
+                <div className="grid grid-cols-3 gap-6 mb-6 max-w-4xl mx-auto">
+                  {/* Small Blind */}
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-emerald-600 shadow-2xl transform hover:scale-105 transition-transform">
+                    <div className="text-emerald-400 text-md font-bold tracking-wider mb-2">SMALL BLIND</div>
+                    <div className="text-6xl font-display font-bold text-white">
+                      {currentBlind.smallBlind.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* Big Blind */}
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-yellow-500 shadow-2xl transform hover:scale-105 transition-transform">
+                    <div className="text-yellow-400 text-md font-bold tracking-wider mb-2">BIG BLIND</div>
+                    <div className="text-6xl font-display font-bold text-white">
+                      {currentBlind.bigBlind.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* Ante */}
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500 shadow-2xl transform hover:scale-105 transition-transform">
+                    <div className="text-purple-400 text-md font-bold tracking-wider mb-2">ANTE</div>
+                    <div className="text-6xl font-display font-bold text-white">
+                      {displayAnte > 0 ? displayAnte.toLocaleString() : '—'}
+                    </div>
                   </div>
                 </div>
-
-                {/* Big Blind */}
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-yellow-500 shadow-2xl transform hover:scale-105 transition-transform">
-                  <div className="text-yellow-400 text-md font-bold tracking-wider mb-2">BIG BLIND</div>
-                  <div className="text-8xl font-display font-bold text-white">
-                    {currentBlind.bigBlind.toLocaleString()}
-                  </div>
-                </div>
-
-                {/* Ante */}
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500 shadow-2xl transform hover:scale-105 transition-transform">
-                  <div className="text-purple-400 text-md font-bold tracking-wider mb-2">ANTE</div>
-                  <div className="text-6xl font-display font-bold text-white">
-                    {displayAnte > 0 ? displayAnte.toLocaleString() : '—'}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Seção SCROLLABLE - Resto do conteúdo */}
-      <div className="relative z-10 flex-1 overflow-y-auto">
-        <div className="container mx-auto px-6 py-8">
-          <div className="max-w-6xl mx-auto">
             {/* Next Level Preview */}
             {nextBlind && (
               <div className={`bg-slate-800 bg-opacity-50 backdrop-blur-sm rounded-xl p-6 mb-8 border max-w-2xl mx-auto ${
@@ -221,6 +253,114 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                 )}
               </div>
             )}
+                {/* Informações do Torneio */}
+                {stats.totalPlayers > 0 && (
+                  <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto mb-6">
+                    {/* Jogadores */}
+                    <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-xl p-6 border-2 border-blue-700 shadow-xl">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Users className="w-6 h-6 text-blue-300" />
+                        <span className="text-blue-300 text-sm font-bold">JOGADORES</span>
+                      </div>
+                      <div className="text-5xl font-bold text-white mb-1">{stats.activePlayers}</div>
+                      <div className="text-blue-300 text-sm">
+                        {stats.totalPlayers} registrados • {stats.totalEntries} entradas
+                      </div>
+                    </div>
+
+                    {/* Stack Médio */}
+                    <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-xl p-6 border-2 border-purple-700 shadow-xl">
+                      <div className="flex items-center gap-3 mb-2">
+                        <ChartColumnStacked className="w-6 h-6 text-purple-300" />
+                        <span className="text-purple-300 text-sm font-bold">STACK MÉDIO</span>
+                      </div>
+                      <div className="text-5xl font-bold text-white mb-1">
+                        {stats.averageStack > 0 ? (stats.averageStack / 1000).toFixed(1) + 'K' : '—'}
+                      </div>
+                      <div className="text-purple-300 text-sm">
+                        {stats.totalChipsInPlay > 0 
+                          ? `${(stats.totalChipsInPlay / 1000000).toFixed(1)}M fichas` 
+                          : 'Sem fichas'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Premiações - Só aparece no ITM */}
+                {isInTheMoney && payouts && (
+                  <div className="max-w-4xl mx-auto mb-6">
+                    <div className="bg-gradient-to-br from-yellow-900 to-amber-900 rounded-2xl p-6 border-2 border-yellow-600 shadow-2xl">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Award className="w-8 h-8 text-yellow-400" />
+                        <div>
+                          <h3 className="text-2xl font-bold text-yellow-400">CHEGAMO NOS PILA! (CNP) 🎉</h3>
+                          <p className="text-yellow-200 text-sm">
+                            {stats.activePlayers} jogadores restantes • Prize Pool: R$ {payouts.netPrizePool.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Tabela de Premiações Compacta */}
+                      <div className="bg-slate-900 bg-opacity-50 rounded-xl p-4">
+                        <div className="grid gap-2 max-h-64 overflow-y-auto">
+                          {payouts.payouts.slice(0, 6).map((payout) => (
+                            <div
+                              key={payout.position}
+                              className={`grid grid-cols-3 gap-4 px-4 py-3 rounded-lg ${
+                                payout.position === 1
+                                  ? 'bg-gradient-to-r from-yellow-800 to-yellow-700 border border-yellow-600'
+                                  : payout.position === 2
+                                  ? 'bg-gradient-to-r from-slate-700 to-slate-600 border border-slate-500'
+                                  : payout.position === 3
+                                  ? 'bg-gradient-to-r from-amber-800 to-amber-700 border border-amber-600'
+                                  : 'bg-slate-800 border border-slate-700'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl">
+                                  {payout.position === 1 ? '🥇' :
+                                   payout.position === 2 ? '🥈' :
+                                   payout.position === 3 ? '🥉' :
+                                   ''}
+                                </span>
+                                <span className={`font-bold ${
+                                  payout.position <= 3 ? 'text-white' : 'text-slate-300'
+                                }`}>
+                                  {payout.position}º Lugar
+                                </span>
+                              </div>
+                              <div className="text-center text-slate-300 font-bold">
+                                {payout.percentage}%
+                              </div>
+                              <div className={`text-right font-bold ${
+                                payout.position === 1 ? 'text-yellow-400' : 'text-white'
+                              }`}>
+                                R$ {payout.amount.toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {payouts.payouts.length > 6 && (
+                            <div className="text-center text-slate-500 text-sm py-2">
+                              + {payouts.payouts.length - 6} posições premiadas
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Seção SCROLLABLE - Resto do conteúdo */}
+      <div className="relative z-10 flex-1 overflow-y-auto">
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            
 
             {/* Toggle Ante */}
             <div className="flex justify-center mb-6">
@@ -373,7 +513,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                   Estrutura Completa do Torneio
                 </h2>
                 <p className="text-slate-300 mt-2">
-                  {structure?.length} níveis
+                  {structure.length} níveis
                 </p>
               </div>
               <button
@@ -484,6 +624,9 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
 
       {/* Modal de Configurações */}
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      
+      {/* Modal de Administração */}
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </div>
   );
 }

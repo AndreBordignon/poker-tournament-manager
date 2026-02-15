@@ -96,22 +96,51 @@ function calculateNextBlinds(currentSB: number, currentBB: number): { smallBlind
 }
 
 function roundToNiceNumber(value: number): number {
-  // Arredonda para números "bonitos" baseado na magnitude
-  if (value < 100) {
-    return Math.round(value / 25) * 25;
-  } else if (value < 500) {
-    return Math.round(value / 50) * 50;
-  } else if (value < 1000) {
+  // Arredonda para números compatíveis com as fichas: 100, 500, 1000, 5000, 25000
+  
+  // Fase 1: Valores pequenos (até 500) - usa fichas de 100
+  if (value <= 500) {
+    return Math.round(value / 100) * 100; // 100, 200, 300, 400, 500
+  }
+  
+  // Fase 2: 500 a 1000 - transição (usa 100 e 500)
+  if (value < 1000) {
+    // Arredonda para 500, 600, 700, 800, 900, 1000
     return Math.round(value / 100) * 100;
-  } else if (value < 5000) {
-    return Math.round(value / 200) * 200;
-  } else if (value < 10000) {
+  }
+  
+  // Fase 3: 1K a 5K - usa fichas de 500 e 1K
+  if (value < 5000) {
+    // Múltiplos de 500: 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000
     return Math.round(value / 500) * 500;
-  } else if (value < 50000) {
-    return Math.round(value / 1000) * 1000;
-  } else {
+  }
+  
+  // Fase 4: 5K a 25K - usa fichas de 1K e 5K
+  if (value < 25000) {
+    // Múltiplos de 1000: 5K, 6K, 7K, 8K, 9K, 10K, 12K, 15K, 20K, 25K
+    // Prioriza valores "bonitos" (5K, 10K, 15K, 20K, 25K)
+    const rounded = Math.round(value / 1000) * 1000;
+    
+    // Se for entre 10K-25K, tenta arredondar para múltiplos de 5K
+    if (rounded >= 10000) {
+      const roundedTo5K = Math.round(value / 5000) * 5000;
+      // Usa múltiplo de 5K se a diferença não for muito grande
+      if (Math.abs(roundedTo5K - value) / value < 0.3) {
+        return roundedTo5K;
+      }
+    }
+    
+    return rounded;
+  }
+  
+  // Fase 5: >= 25K - usa fichas de 5K e 25K
+  if (value < 100000) {
+    // Múltiplos de 5000: 25K, 30K, 35K, 40K, 45K, 50K, 60K, 75K, 100K
     return Math.round(value / 5000) * 5000;
   }
+  
+  // Fase 6: Valores muito altos (>100K) - múltiplos de 25K
+  return Math.round(value / 25000) * 25000; // 100K, 125K, 150K, 175K, 200K
 }
 
 // Estruturas pré-definidas para facilitar
@@ -142,5 +171,14 @@ export const presetStructures = {
     includeBreaks: true,
     breakDuration: 15,
     breakInterval: 4,
+  },
+  hyper: {
+    name: 'Hyper Turbo',
+    startingSmallBlind: 500,
+    startingBigBlind: 1000,
+    levelDuration: 10,
+    includeBreaks: false,
+    breakDuration: 5,
+    breakInterval: 6,
   },
 };
