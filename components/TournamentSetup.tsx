@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Settings, Clock, Coffee } from 'lucide-react';
+import { ArrowRight, Settings, Clock, Coffee, Edit2, Check, X } from 'lucide-react';
 import { generateBlindStructure, presetStructures, TournamentConfig } from '@/lib/blindStructureGenerator';
 import { useTournamentStore } from '@/store/tournament-store';
-import { getSavedStructures, saveCurrentTournament, saveStructure } from '@/lib/storage';
+import { getSavedStructures, saveStructure } from '@/lib/storage';
+import { BlindLevel } from '@/types/tournament';
 
 interface TournamentSetupProps {
   onComplete: () => void;
@@ -12,7 +13,7 @@ interface TournamentSetupProps {
 }
 
 export default function TournamentSetup({ onComplete, onBack }: TournamentSetupProps) {
-  const { setStructure, setTournamentName } = useTournamentStore();
+  const { setStructure } = useTournamentStore();
   
   const [config, setConfig] = useState<TournamentConfig>({
     name: "Meu Torneio",
@@ -26,6 +27,9 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
 
   const [showPreview, setShowPreview] = useState(false);
   const [savedStructures, setSavedStructures] = useState(getSavedStructures());
+  const [customStructure, setCustomStructure] = useState<BlindLevel[] | null>(null);
+  const [editingLevel, setEditingLevel] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState({ sb: 0, bb: 0, ante: 0, duration: 0 });
 
   const handlePresetSelect = (presetKey: keyof typeof presetStructures) => {
     const preset = presetStructures[presetKey];
@@ -55,7 +59,7 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
   };
 
   const handleSaveStructure = () => {
-    const structure = generateBlindStructure(config);
+    const structure = customStructure || generateBlindStructure(config);
     saveStructure(config.name || 'Estrutura sem nome', structure, {
       startingSmallBlind: config.startingSmallBlind,
       startingBigBlind: config.startingBigBlind,
@@ -69,25 +73,46 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
   };
 
   const handleGenerateAndStart = () => {
-    const structure = generateBlindStructure(config);
+    const structure = customStructure || generateBlindStructure(config);
     setStructure(structure);
-    setTournamentName(config.name || 'Torneio Atual');
-    saveCurrentTournament({
-      gameMode: 'tournament',
-      currentLevel: 0,
-      timeRemaining: config.levelDuration * 60,
-      isRunning: false,
-      isPaused: false,
-      structure: structure,
-      anteEnabled: false,
-      startTime: Date.now(),
-      tournamentName: config.name || 'Torneio Atual',
-      cashGameConfig: undefined,
-    });
     onComplete();
   };
 
-  const previewStructure = showPreview ? generateBlindStructure(config) : [];
+  // Handlers para edição de blinds no preview
+  const handleStartEdit = (idx: number) => {
+    const structure = customStructure || generateBlindStructure(config);
+    const level = structure[idx];
+    setEditingLevel(idx);
+    setEditValues({
+      sb: level.smallBlind,
+      bb: level.bigBlind,
+      ante: level.ante,
+      duration: level.duration,
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editingLevel === null) return;
+    
+    const structure = customStructure || generateBlindStructure(config);
+    const newStructure = [...structure];
+    newStructure[editingLevel] = {
+      ...newStructure[editingLevel],
+      smallBlind: editValues.sb,
+      bigBlind: editValues.bb,
+      ante: editValues.ante,
+      duration: editValues.duration,
+    };
+    
+    setCustomStructure(newStructure);
+    setEditingLevel(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLevel(null);
+  };
+
+  const previewStructure = customStructure || (showPreview ? generateBlindStructure(config) : []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-950 flex items-center justify-center p-4">
@@ -162,7 +187,7 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
                       <button
                         key={savedStructure.id}
                         onClick={() => handleSavedStructureSelect(savedStructure)}
-                        className="bg-cyan-900 hover:bg-cyan-800 text-white px-3 py-2 rounded-lg font-bold transition-all text-xs truncate"
+                        className="bg-purple-900 hover:bg-purple-800 text-white px-3 py-2 rounded-lg font-bold transition-all text-xs truncate"
                         title={savedStructure.name}
                       >
                         {savedStructure.name}
@@ -286,7 +311,7 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
               
               <button
                 onClick={handleSaveStructure}
-                className="w-full bg-cyan-700 hover:bg-cyan-600 text-white px-6 py-3 rounded-xl 
+                className="w-full bg-purple-700 hover:bg-purple-600 text-white px-6 py-3 rounded-xl 
                          font-bold transition-all"
               >
                 💾 SALVAR ESTRUTURA
@@ -320,20 +345,23 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
             {showPreview ? (
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {/* Header */}
-                <div className="grid grid-cols-4 gap-2 text-xs font-bold text-emerald-400 border-b border-slate-700 pb-2 sticky top-0 bg-slate-900">
+                <div className="grid grid-cols-5 gap-2 text-xs font-bold text-emerald-400 border-b border-slate-700 pb-2 sticky top-0 bg-slate-900">
                   <div>LEVEL</div>
                   <div>SB</div>
                   <div>BB</div>
                   <div>TEMPO</div>
+                  <div className="text-center">EDITAR</div>
                 </div>
 
                 {/* Níveis */}
                 {previewStructure.map((level, idx) => {
                   const isBreak = level.smallBlind === 0;
+                  const isEditing = editingLevel === idx;
+                  
                   return (
                     <div
                       key={idx}
-                      className={`grid grid-cols-4 gap-2 text-sm py-2 rounded-lg ${
+                      className={`grid grid-cols-5 gap-2 text-sm py-2 px-2 rounded-lg ${
                         isBreak
                           ? 'bg-amber-900 bg-opacity-30 border border-amber-700 text-amber-300'
                           : 'bg-slate-900 bg-opacity-50 text-slate-300'
@@ -342,9 +370,75 @@ export default function TournamentSetup({ onComplete, onBack }: TournamentSetupP
                       <div className="font-bold">
                         {isBreak ? '☕ BREAK' : `${level.level}`}
                       </div>
-                      <div>{isBreak ? '—' : level.smallBlind.toLocaleString()}</div>
-                      <div>{isBreak ? '—' : level.bigBlind.toLocaleString()}</div>
-                      <div className="text-slate-500">{Math.floor(level.duration / 60)}min</div>
+                      
+                      <div>
+                        {isEditing && !isBreak ? (
+                          <input
+                            type="number"
+                            value={editValues.sb}
+                            onChange={(e) => setEditValues({ ...editValues, sb: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-slate-800 text-white px-1 py-0.5 rounded text-xs border border-emerald-500"
+                          />
+                        ) : (
+                          isBreak ? '—' : level.smallBlind.toLocaleString()
+                        )}
+                      </div>
+                      
+                      <div>
+                        {isEditing && !isBreak ? (
+                          <input
+                            type="number"
+                            value={editValues.bb}
+                            onChange={(e) => setEditValues({ ...editValues, bb: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-slate-800 text-white px-1 py-0.5 rounded text-xs border border-emerald-500"
+                          />
+                        ) : (
+                          isBreak ? '—' : level.bigBlind.toLocaleString()
+                        )}
+                      </div>
+                      
+                      <div className="text-slate-500">
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={Math.floor(editValues.duration / 60)}
+                            onChange={(e) => setEditValues({ ...editValues, duration: (parseInt(e.target.value) || 0) * 60 })}
+                            className="w-full bg-slate-800 text-white px-1 py-0.5 rounded text-xs border border-emerald-500"
+                            placeholder="min"
+                          />
+                        ) : (
+                          `${Math.floor(level.duration / 60)}min`
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-center gap-1">
+                        {isEditing ? (
+                          <>
+                            <button
+                              onClick={handleSaveEdit}
+                              className="bg-green-600 hover:bg-green-500 text-white p-0.5 rounded"
+                              title="Salvar"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="bg-red-600 hover:bg-red-500 text-white p-0.5 rounded"
+                              title="Cancelar"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleStartEdit(idx)}
+                            className="bg-slate-700 hover:bg-slate-600 text-white p-0.5 rounded"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

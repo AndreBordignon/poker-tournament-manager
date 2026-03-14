@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTournamentTimer } from '@/hooks/useTournamentTimer';
 import { useAdminStore } from '@/store/admin-store';
 import { formatTime } from '@/lib/utils';
-import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home, Settings, Users, Award, ServerCrash, ChartColumnStacked } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RotateCcw, Plus, List, X, Home, Settings, Users, Award, ChartColumnStacked, Edit2, Check } from 'lucide-react';
 import SettingsModal from '@/components/SettingsModal';
 import AdminPanel from '@/components/AdminPanel';
 
@@ -16,6 +16,8 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [editingLevel, setEditingLevel] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState({ sb: 0, bb: 0, ante: 0, duration: 0 });
   
   const {
     currentLevel,
@@ -32,6 +34,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
     previousLevel,
     addTime,
     toggleAnte,
+    setStructure,
   } = useTournamentTimer();
 
   // Pega estatísticas do admin
@@ -55,6 +58,38 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
   // Verifica se é break
   const isBreak = currentBlind.smallBlind === 0;
   const nextIsBreak = nextBlind && nextBlind.smallBlind === 0;
+
+  // Handlers para edição de blinds
+  const handleStartEdit = (idx: number) => {
+    const level = structure[idx];
+    setEditingLevel(idx);
+    setEditValues({
+      sb: level.smallBlind,
+      bb: level.bigBlind,
+      ante: level.ante,
+      duration: level.duration,
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editingLevel === null) return;
+    
+    const newStructure = [...structure];
+    newStructure[editingLevel] = {
+      ...newStructure[editingLevel],
+      smallBlind: editValues.sb,
+      bigBlind: editValues.bb,
+      ante: editValues.ante,
+      duration: editValues.duration,
+    };
+    
+    setStructure(newStructure);
+    setEditingLevel(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLevel(null);
+  };
 
   // Calcula denominações de fichas baseado no small blind atual
   // Fichas disponíveis: 100, 500, 1000, 5000, 25000
@@ -513,7 +548,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                   Estrutura Completa do Torneio
                 </h2>
                 <p className="text-slate-300 mt-2">
-                  {structure.length} níveis
+                  {structure.length} níveis • Clique em ✏️ para editar
                 </p>
               </div>
               <button
@@ -559,22 +594,25 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
               </div>
 
               {/* Header da Tabela */}
-              <div className="grid grid-cols-5 gap-4 text-sm font-bold text-emerald-400 border-b border-slate-700 pb-4 mb-4 sticky top-0 bg-slate-900 bg-opacity-95 backdrop-blur-sm z-10">
+              <div className="grid grid-cols-6 gap-4 text-sm font-bold text-emerald-400 border-b border-slate-700 pb-4 mb-4 sticky top-0 bg-slate-900 bg-opacity-95 backdrop-blur-sm z-10">
                 <div>LEVEL</div>
                 <div>SMALL BLIND</div>
                 <div>BIG BLIND</div>
                 <div>ANTE</div>
                 <div>DURATION</div>
+                <div className="text-center">EDITAR</div>
               </div>
 
               {/* Linhas da Tabela */}
               <div className="space-y-2">
                 {structure.map((blind, idx) => {
                   const isBreakLevel = blind.smallBlind === 0;
+                  const isEditing = editingLevel === idx;
+                  
                   return (
                     <div
                       key={idx}
-                      className={`grid grid-cols-5 gap-4 text-sm py-4 rounded-xl transition-all ${
+                      className={`grid grid-cols-6 gap-4 text-sm py-4 px-2 rounded-xl transition-all ${
                         idx === currentLevel
                           ? 'bg-emerald-900 bg-opacity-50 font-bold text-emerald-300 border-2 border-emerald-500 shadow-lg scale-105'
                           : isBreakLevel
@@ -582,6 +620,7 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                           : 'text-slate-300 hover:bg-slate-700 hover:bg-opacity-30 border-2 border-transparent'
                       }`}
                     >
+                      {/* Level */}
                       <div className="flex items-center gap-2">
                         {idx === currentLevel && (
                           <span className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -590,17 +629,96 @@ export default function TimerDisplay({ onBackToMenu }: TimerDisplayProps) {
                           {isBreakLevel ? '☕ BREAK' : blind.level}
                         </span>
                       </div>
+
+                      {/* Small Blind */}
                       <div className={idx === currentLevel ? 'text-xl' : ''}>
-                        {isBreakLevel ? '—' : blind.smallBlind.toLocaleString()}
+                        {isEditing && !isBreakLevel ? (
+                          <input
+                            type="number"
+                            value={editValues.sb}
+                            onChange={(e) => setEditValues({ ...editValues, sb: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-slate-800 text-white px-2 py-1 rounded border border-emerald-500"
+                            min="0"
+                          />
+                        ) : (
+                          isBreakLevel ? '—' : blind.smallBlind.toLocaleString()
+                        )}
                       </div>
+
+                      {/* Big Blind */}
                       <div className={idx === currentLevel ? 'text-xl font-bold' : ''}>
-                        {isBreakLevel ? '—' : blind.bigBlind.toLocaleString()}
+                        {isEditing && !isBreakLevel ? (
+                          <input
+                            type="number"
+                            value={editValues.bb}
+                            onChange={(e) => setEditValues({ ...editValues, bb: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-slate-800 text-white px-2 py-1 rounded border border-emerald-500"
+                            min="0"
+                          />
+                        ) : (
+                          isBreakLevel ? '—' : blind.bigBlind.toLocaleString()
+                        )}
                       </div>
+
+                      {/* Ante */}
                       <div className={idx === currentLevel ? 'text-xl' : ''}>
-                        {isBreakLevel ? '—' : anteEnabled && blind.ante > 0 ? blind.ante.toLocaleString() : '—'}
+                        {isEditing && !isBreakLevel ? (
+                          <input
+                            type="number"
+                            value={editValues.ante}
+                            onChange={(e) => setEditValues({ ...editValues, ante: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-slate-800 text-white px-2 py-1 rounded border border-emerald-500"
+                            min="0"
+                          />
+                        ) : (
+                          isBreakLevel ? '—' : anteEnabled && blind.ante > 0 ? blind.ante.toLocaleString() : '—'
+                        )}
                       </div>
+
+                      {/* Duration */}
                       <div className="text-slate-400">
-                        {formatTime(blind.duration)}
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={Math.floor(editValues.duration / 60)}
+                            onChange={(e) => setEditValues({ ...editValues, duration: (parseInt(e.target.value) || 0) * 60 })}
+                            className="w-full bg-slate-800 text-white px-2 py-1 rounded border border-emerald-500"
+                            min="1"
+                            placeholder="min"
+                          />
+                        ) : (
+                          formatTime(blind.duration)
+                        )}
+                      </div>
+
+                      {/* Botões de Edição */}
+                      <div className="flex items-center justify-center gap-2">
+                        {isEditing ? (
+                          <>
+                            <button
+                              onClick={handleSaveEdit}
+                              className="bg-green-600 hover:bg-green-500 text-white p-1 rounded"
+                              title="Salvar"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="bg-red-600 hover:bg-red-500 text-white p-1 rounded"
+                              title="Cancelar"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleStartEdit(idx)}
+                            className="bg-slate-700 hover:bg-slate-600 text-white p-1 rounded"
+                            title="Editar nível"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

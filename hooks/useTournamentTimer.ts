@@ -17,17 +17,17 @@ const playAlertSound = (type: 'warning' | 'critical') => {
   if (type === 'warning') {
     // 5 minutos: som mais suave (440Hz - nota A)
     oscillator.frequency.value = 440;
-    gainNode.gain.value = 0.3;
+    gainNode.gain.value = 0.8; // Aumentado de 0.3 para 0.8
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.2);
+    oscillator.stop(audioContext.currentTime + 0.3); // Duração aumentada de 0.2 para 0.3
   } else {
     // 1 minuto: som mais urgente (880Hz - nota A oitava acima)
     oscillator.frequency.value = 880;
-    gainNode.gain.value = 0.4;
+    gainNode.gain.value = 1.0; // Aumentado de 0.4 para 1.0 (volume máximo)
     
     // Beep triplo para criar urgência
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.15);
+    oscillator.stop(audioContext.currentTime + 0.2); // Duração aumentada
     
     setTimeout(() => {
       const osc2 = audioContext.createOscillator();
@@ -35,10 +35,10 @@ const playAlertSound = (type: 'warning' | 'critical') => {
       osc2.connect(gain2);
       gain2.connect(audioContext.destination);
       osc2.frequency.value = 880;
-      gain2.gain.value = 0.4;
+      gain2.gain.value = 1.0; // Aumentado de 0.4 para 1.0
       osc2.start();
-      osc2.stop(audioContext.currentTime + 0.15);
-    }, 200);
+      osc2.stop(audioContext.currentTime + 0.2); // Duração aumentada
+    }, 250); // Intervalo aumentado de 200 para 250ms
     
     setTimeout(() => {
       const osc3 = audioContext.createOscillator();
@@ -46,10 +46,10 @@ const playAlertSound = (type: 'warning' | 'critical') => {
       osc3.connect(gain3);
       gain3.connect(audioContext.destination);
       osc3.frequency.value = 880;
-      gain3.gain.value = 0.4;
+      gain3.gain.value = 1.0; // Aumentado de 0.4 para 1.0
       osc3.start();
-      osc3.stop(audioContext.currentTime + 0.15);
-    }, 400);
+      osc3.stop(audioContext.currentTime + 0.2); // Duração aumentada
+    }, 500); // Intervalo aumentado de 400 para 500ms
   }
 };
 
