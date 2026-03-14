@@ -3,53 +3,64 @@
 import { useEffect, useRef } from 'react';
 import { useTournamentStore } from '@/store/tournament-store';
 
-// Função para tocar som de alerta
+// Função melhorada para tocar som de alerta
 const playAlertSound = (type: 'warning' | 'critical') => {
-  // Usando Web Audio API para criar um beep
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  // Configurações do som
-  if (type === 'warning') {
-    // 5 minutos: som mais suave (440Hz - nota A)
-    oscillator.frequency.value = 440;
-    gainNode.gain.value = 0.8; // Aumentado de 0.3 para 0.8
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.3); // Duração aumentada de 0.2 para 0.3
-  } else {
-    // 1 minuto: som mais urgente (880Hz - nota A oitava acima)
-    oscillator.frequency.value = 880;
-    gainNode.gain.value = 1.0; // Aumentado de 0.4 para 1.0 (volume máximo)
+  try {
+    // Usando Web Audio API para criar um beep
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
-    // Beep triplo para criar urgência
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.2); // Duração aumentada
+    // Resume o contexto se estiver suspenso (política de navegador)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
     
-    setTimeout(() => {
-      const osc2 = audioContext.createOscillator();
-      const gain2 = audioContext.createGain();
-      osc2.connect(gain2);
-      gain2.connect(audioContext.destination);
-      osc2.frequency.value = 880;
-      gain2.gain.value = 1.0; // Aumentado de 0.4 para 1.0
-      osc2.start();
-      osc2.stop(audioContext.currentTime + 0.2); // Duração aumentada
-    }, 250); // Intervalo aumentado de 200 para 250ms
+    const playBeep = (frequency: number, duration: number, volume: number, delay: number = 0) => {
+      setTimeout(() => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine'; // Onda senoidal para som mais suave
+        
+        // Envelope ADSR para evitar clicks
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + duration - 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+        
+        console.log(`🔊 Beep tocado: ${frequency}Hz, ${volume} volume`);
+      }, delay);
+    };
     
-    setTimeout(() => {
-      const osc3 = audioContext.createOscillator();
-      const gain3 = audioContext.createGain();
-      osc3.connect(gain3);
-      gain3.connect(audioContext.destination);
-      osc3.frequency.value = 880;
-      gain3.gain.value = 1.0; // Aumentado de 0.4 para 1.0
-      osc3.start();
-      osc3.stop(audioContext.currentTime + 0.2); // Duração aumentada
-    }, 500); // Intervalo aumentado de 400 para 500ms
+    if (type === 'warning') {
+      // 5 minutos: beep duplo médio
+      console.log('🔔 Tocando alerta de 5 minutos');
+      playBeep(440, 0.3, 0.8, 0);
+      playBeep(440, 0.3, 0.8, 400);
+    } else {
+      // 1 minuto: beep triplo agudo e forte
+      console.log('🚨 Tocando alerta de 1 minuto');
+      playBeep(880, 0.25, 1.0, 0);
+      playBeep(880, 0.25, 1.0, 350);
+      playBeep(880, 0.25, 1.0, 700);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao tocar som:', error);
+    
+    // Fallback: tentar com beep do sistema
+    try {
+      const beep = new Audio('data:audio/wav;base64,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');
+      beep.volume = type === 'critical' ? 1.0 : 0.8;
+      beep.play().catch(e => console.error('Fallback beep failed:', e));
+    } catch (fallbackError) {
+      console.error('❌ Fallback também falhou:', fallbackError);
+    }
   }
 };
 
@@ -59,6 +70,30 @@ export function useTournamentTimer() {
   // Refs para controlar se já tocou o som (evitar tocar múltiplas vezes)
   const fiveMinAlertPlayed = useRef(false);
   const oneMinAlertPlayed = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Inicializa AudioContext na primeira interação do usuário
+  useEffect(() => {
+    const initAudio = () => {
+      if (!audioContextRef.current) {
+        try {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+          console.log('✅ AudioContext inicializado');
+        } catch (error) {
+          console.error('❌ Erro ao inicializar AudioContext:', error);
+        }
+      }
+    };
+
+    // Tenta inicializar no primeiro click/touch
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+
+    return () => {
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
+    };
+  }, []);
 
   // Effect para o timer
   useEffect(() => {
